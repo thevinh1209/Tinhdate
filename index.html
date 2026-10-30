@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>TOOL HỖ TRỢ TÍNH DATE VH3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Cloudflare Web Analytics -->
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "c0d7ec480fbf4df2a47a1f8413d40485"}'></script>
+<!-- End Cloudflare Web Analytics -->
+
+<style>
+:root {
+  --orange: #E8690F;
+  --orange-deep: #BF540A;
+  --orange-soft: #FFE6CC;
+  --page: #FFF3E3;
+  --ink: #33241A;
+  --muted: #86624A;
+  --line: #F3D2AE;
+  --danger: #B3261E;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  padding: 12px;
+  background: var(--page);
+  color: var(--ink);
+  font-family: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  line-height: 1.5;
+}
+button, input { font-family: inherit; }
+button { cursor: pointer; }
+
+.app {
+  max-width: 520px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(191, 84, 10, 0.18);
+}
+.top {
+  background: var(--orange);
+  color: #fff;
+  padding: 22px 20px 18px;
+  text-align: center;
+}
+.top h1 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.body { padding: 16px 18px 22px; }
+
+/* ---------- Tabs ngành hàng ---------- */
+.tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.tab {
+  text-align: left;
+  padding: 9px 8px;
+  background: #fff;
+  color: var(--ink);
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: background .15s, border-color .15s;
+}
+.tab-name { font-size: 13px; font-weight: 700; line-height: 1.3; }
+.tab-sub { font-size: 12px; color: var(--muted); }
+.tab.is-active { background: var(--orange-deep); border-color: var(--orange-deep); color: #fff; }
+.tab.is-active .tab-sub { color: #FFE6CC; }
+
+.notes {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  background: var(--orange-soft);
+  border-left: 4px solid var(--orange);
+  border-radius: 4px 10px 10px 4px;
+  font-size: 13px;
+}
+.notes li + li { margin-top: 4px; }
+
+/* ---------- Chế độ nhập ---------- */
+.section-label { margin: 18px 0 6px; font-size: 14px; font-weight: 600; }
+.seg {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  border: 2px solid var(--orange-deep);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.seg button {
+  border: 0;
+  background: #fff;
+  color: var(--orange-deep);
+  padding: 9px 6px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  min-height: 44px;
+  transition: background .15s;
+}
+.seg button + button { border-left: 2px solid var(--orange-deep); }
+.seg button.is-on { background: var(--orange-deep); color: #fff; }
+
+/* ---------- Trường nhập ---------- */
+.field { margin-top: 16px; }
+.field > label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 600; }
+.txt {
+  width: 100%;
+  height: 52px;
+  padding: 0 14px;
+  font-size: 18px;
+  color: var(--ink);
+  background: #fff;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+}
+.txt::placeholder { color: #B79A85; font-size: 15px; }
+.txt:focus { outline: 3px solid rgba(232, 105, 15, .28); border-color: var(--orange-deep); }
+
+.date-row { display: flex; gap: 8px; }
+.date-row .txt { flex: 1; min-width: 0; }
+.cal {
+  position: relative;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  background: var(--orange-soft);
+  border: 2px solid var(--line);
+  border-radius: 10px;
+}
+.cal .cal-pick {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.cal:focus-within { outline: 3px solid rgba(232, 105, 15, .28); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip {
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--ink);
+  background: #fff;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+}
+.chip.is-on {
+  background: var(--orange-soft);
+  border-color: var(--orange-deep);
+  color: var(--orange-deep);
+  font-weight: 600;
+}
+
+.hsd-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+.hsd-row .seg { height: 52px; }
+.hsd-row .seg button { padding: 0 12px; min-height: 0; }
+
+.rule-note { margin: 14px 0 0; font-size: 12px; color: var(--muted); }
+
+/* ---------- Kết quả ---------- */
+.result {
+  margin-top: 20px;
+  border: 2px solid var(--orange);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.info {
+  padding: 8px 14px;
+  background: var(--orange-soft);
+  font-size: 13px;
+  font-weight: 500;
+  min-height: 36px;
+}
+.info.is-error { background: #FDE7E5; color: var(--danger); }
+.out {
+  margin: 0;
+  padding: 14px;
+  min-height: 150px;
+  white-space: pre-line;
+  font-family: inherit;
+  font-size: 17px;
+  line-height: 1.8;
+}
+.out.is-empty { color: var(--muted); font-size: 14px; line-height: 1.5; }
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px 12px; }
+.btn {
+  min-height: 48px;
+  border: 2px solid var(--orange-deep);
+  border-radius: 10px;
+  background: var(--orange-deep);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+}
+.btn.ghost { background: #fff; color: var(--orange-deep); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn:focus-visible, .tab:focus-visible, .seg button:focus-visible, .chip:focus-visible {
+  outline: 3px solid rgba(232, 105, 15, .5);
+  outline-offset: 2px;
+}
+
+/* ---------- Lịch sử ---------- */
+#historyPanel {
+  display: none;
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+#historyPanel h3 {
+  margin: 0;
+  padding: 10px 14px;
+  background: #4A3222;
+  color: #fff;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#historyPanel h3 span { font-size: 12px; color: #E2C9B3; font-weight: 400; }
+#historyList { max-height: 300px; overflow-y: auto; font-size: 12px; }
+.history-row { padding: 8px 14px; border-bottom: 1px solid #F6E5D3; display: flex; flex-direction: column; gap: 2px; }
+.history-row:last-child { border-bottom: 0; }
+.history-row:nth-child(odd) { background: #FFF9F2; }
+.history-time { color: var(--muted); font-size: 11px; }
+#historyEmpty { padding: 16px; text-align: center; color: var(--muted); font-size: 13px; }
+.history-foot { padding: 8px 14px; background: #FFF9F2; border-top: 1px solid var(--line); }
+.btn.danger { background: #B3261E; border-color: #B3261E; min-height: 38px; font-size: 12px; width: 100%; }
+
+/* ---------- Tab Ngày cần rút ---------- */
+.rut-date { margin-top: 14px; text-align: center; font-weight: 600; font-size: 14px; line-height: 1.7; }
+.rut-date strong { color: var(--orange-deep); }
+.rut-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 0 4px 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 2px solid var(--line);
+}
+.rut-head span:last-child { text-align: right; line-height: 1.4; }
+.rut-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 4px;
+  border-bottom: 1px solid #F6E5D3;
+}
+.rut-label { font-weight: 600; }
+.rut-val, .rut-res { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.rut-main { font-weight: 700; font-size: 16px; color: var(--orange-deep); }
+.rut-main.is-muted { color: var(--muted); font-weight: 500; font-size: 13px; }
+.rut-exp { font-size: 12px; color: var(--danger); background: #FDE7E5; padding: 2px 8px; border-radius: 6px; }
+.rut-input { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 0 4px; }
+.rut-input .txt { width: 104px; flex: none; height: 48px; padding: 0 12px; font-size: 17px; }
+.rut-res { flex: 1; min-width: 0; }
+.rut-res:empty { display: none; }
+.rut-clear {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--muted);
+  background: #fff;
+  border: 1.5px solid var(--line);
+  border-radius: 50%;
+}
+.rut-clear:focus-visible { outline: 3px solid rgba(232, 105, 15, .5); outline-offset: 2px; }
+
+/* ---------- Cổng kiểm tra thiết bị ---------- */
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: var(--orange);
+}
+.gate-box {
+  width: 100%;
+  max-width: 380px;
+  padding: 24px 20px 20px;
+  text-align: center;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .2);
+}
+.gate-box h2 { margin: 0 0 8px; font-size: 1.15rem; line-height: 1.3; }
+.gate-box p { margin: 0; font-size: 14px; }
+.gate-code {
+  margin: 16px 0 14px;
+  padding: 14px 6px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  word-break: break-all;
+  user-select: all;
+  background: var(--orange-soft);
+  border: 2px dashed var(--orange-deep);
+  border-radius: 10px;
+}
+.gate-note { min-height: 20px; margin-top: 12px !important; font-size: 13px !important; color: var(--danger); }
+.gate .btn-row { padding: 0; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+@media (max-width: 380px) {
+  .body { padding: 14px 12px 20px; }
+  .top h1 { font-size: 1.2rem; }
+}
+</style>
+</head>
+<body>
+<!-- Cổng kiểm tra thiết bị: hiện cho đến khi thiết bị được duyệt -->
+<div id="gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <div class="gate-box">
+    <h2 id="gateTitle">Đang kiểm tra thiết bị...</h2>
+    <p id="gateMsg"></p>
+    <div id="gateCodeWrap" hidden>
+      <div class="gate-code" id="gateCode" aria-label="Mã thiết bị"></div>
+      <div class="btn-row">
+        <button type="button" class="btn" id="gateCopy">Copy mã</button>
+        <button type="button" class="btn ghost" id="gateRetry">Kiểm tra lại</button>
+      </div>
+      <p class="gate-note" id="gateNote" role="status"></p>
+    </div>
+  </div>
+</div>
+<main class="app" id="app" hidden>
+  <header class="top">
+    <h1>TOOL HỖ TRỢ TÍNH DATE VH3</h1>
+  </header>
+
+  <div class="body">
+    <!-- Tab ngành hàng -->
+    <div class="tabs" role="tablist" aria-label="Nhóm ngành hàng">
+      <button type="button" role="tab" class="tab is-active" data-tab="meat" aria-selected="true">
+        <span class="tab-name">Thịt, cá, thủy hải sản, trứng</span>
+        <span class="tab-sub">Giảm 20% / 40%</span>
+      </button>
+      <button type="button" role="tab" class="tab" data-tab="other" aria-selected="false">
+        <span class="tab-name">Các ngành hàng còn lại</span>
+        <span class="tab-sub">Giảm 25% / 49%</span>
+      </button>
+      <button type="button" role="tab" class="tab" data-tab="rut" aria-selected="false">
+        <span class="tab-name">Ngày cần rút</span>
+        <span class="tab-sub">Rút hàng tối nay</span>
+      </button>
+    </div>
+
+    <div id="calcView">
+
+    <ul class="notes">
+      <li>Chọn đúng tab tương ứng với nhóm ngành hàng cần tính.</li>
+      <li>Nhóm 1 và 2 (hạn sử dụng dưới 5 ngày) có khung giờ giảm giá 40%/49% là 18h00.</li>
+    </ul>
+
+    <!-- Chế độ nhập -->
+    <div class="section-label" id="modeLabel">Cách nhập</div>
+    <div class="seg" id="modeSeg" role="group" aria-labelledby="modeLabel">
+      <button type="button" class="is-on" data-mode="1">Ngày sản xuất<br>+ Số ngày hạn sử dụng</button>
+      <button type="button" data-mode="2">Ngày hết hạn<br>+ Số ngày hạn sử dụng</button>
+      <button type="button" data-mode="3">Ngày sản xuất<br>+ Ngày hết hạn</button>
+    </div>
+
+    <div class="field" id="fNsx">
+      <label for="nsx">Ngày sản xuất</label>
+      <div class="date-row">
+        <input class="txt" id="nsx" type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="Gõ liền: 01102026">
+        <span class="cal"><span aria-hidden="true">📅</span><input type="date" class="cal-pick" data-for="nsx" aria-label="Chọn ngày sản xuất từ lịch" tabindex="-1"></span>
+      </div>
+      <div class="chips">
+        <button type="button" class="chip" data-quick="0" data-for="nsx">Hôm nay</button>
+        <button type="button" class="chip" data-quick="-1" data-for="nsx">Hôm qua</button>
+      </div>
+    </div>
+
+    <div class="field" id="fNhh" hidden>
+      <label for="nhh">Ngày hết hạn</label>
+      <div class="date-row">
+        <input class="txt" id="nhh" type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="Gõ liền: 15102026">
+        <span class="cal"><span aria-hidden="true">📅</span><input type="date" class="cal-pick" data-for="nhh" aria-label="Chọn ngày hết hạn từ lịch" tabindex="-1"></span>
+      </div>
+    </div>
+
+    <div class="field" id="fHsd">
+      <label for="hsd">Số ngày hạn sử dụng</label>
+      <div class="hsd-row">
+        <input class="txt" id="hsd" type="text" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="Nhập số">
+        <div class="seg" id="unitSeg" role="group" aria-label="Đơn vị hạn sử dụng">
+          <button type="button" class="is-on" data-unit="d">Ngày</button>
+          <button type="button" data-unit="m">Tháng</button>
+          <button type="button" data-unit="y">Năm</button>
+        </div>
+      </div>
+      <div class="chips" id="hsdChips"></div>
+    </div>
+
+    <p class="rule-note">Quy ước: 1 tháng = 30 ngày, 1 năm = 12 tháng = 360 ngày. Ngày sản xuất được tính là ngày đầu tiên của hạn sử dụng.</p>
+
+    <!-- Kết quả -->
+    <section class="result" aria-live="polite">
+      <div class="info" id="info"></div>
+      <pre class="out is-empty" id="result"></pre>
+      <div class="btn-row">
+        <button type="button" class="btn" id="copyBtn" disabled>Copy kết quả</button>
+        <button type="button" class="btn ghost" id="historyBtn">📋 Lịch sử</button>
+      </div>
+    </section>
+
+    <div id="historyPanel">
+      <h3>Lịch sử sử dụng (thiết bị này) <span id="historyCount"></span></h3>
+      <div id="historyList"></div>
+      <div id="historyEmpty" hidden>Chưa có lịch sử nào.</div>
+      <div class="history-foot">
+        <button type="button" class="btn danger" id="clearBtn">🗑 Xóa toàn bộ lịch sử</button>
+      </div>
+    </div>
+    </div><!-- /calcView -->
+
+    <!-- Tab Ngày cần rút -->
+    <div id="rutView" hidden>
+      <ul class="notes">
+        <li>Tab này để tính hàng có ngày sản xuất hoặc ngày hết hạn sẽ giảm giá vào ngày mai.</li>
+      </ul>
+      <div class="rut-date">
+        Hôm nay: <span id="rutToday"></span><br>
+        Ngày mai (bắt đầu giảm giá): <strong id="rutTomorrow"></strong>
+      </div>
+      <div class="rut-head">
+        <span>Số ngày hạn sử dụng</span>
+        <span>Ngày sản xuất cần rút<br>Ngày hết hạn tương ứng</span>
+      </div>
+      <div id="rutDefault"></div>
+      <div class="section-label">Nhập thêm số ngày hạn sử dụng</div>
+      <div id="rutList"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+window.__vh3Start = function () {
+  'use strict';
+
+  const STORAGE_KEY = 'vh3_usage_log';
+  const MAX_LOG = 200;
+
+  /* ================= QUY TẮC GIẢM GIÁ =================
+     a = số ngày cộng/trừ so với ngày hết hạn (D) cho mức giảm thứ 1 (20% hoặc 25%); null = không có
+     b = tương tự cho mức giảm thứ 2 (40% hoặc 49%)
+     Quy ước: 1 tháng = 30 ngày. Bỏ qua cột hủy và các tiền tố giờ. */
+  const GROUPS = [
+    { n: 1,  min: 1,   max: 2,        a: null, b: 0   }, // 1 - 2 ngày
+    { n: 2,  min: 3,   max: 4,        a: 0,    b: 0   }, // 3 - 4 ngày
+    { n: 3,  min: 5,   max: 7,        a: -1,   b: 0   }, // 5 - 7 ngày
+    { n: 4,  min: 8,   max: 14,       a: -2,   b: -1  }, // 8 - 14 ngày
+    { n: 5,  min: 15,  max: 29,       a: -3,   b: -1  }, // 15 - 29 ngày
+    { n: 6,  min: 30,  max: 59,       a: -3,   b: -2  }, // 1 - dưới 2 tháng
+    { n: 7,  min: 60,  max: 179,      a: -6,   b: -3  }, // 2 - dưới 6 tháng
+    { n: 8,  min: 180, max: 359,      a: -20,  b: -15 }, // 6 - dưới 12 tháng
+    { n: 9,  min: 360, max: 719,      a: -30,  b: -20 }, // 12 - dưới 24 tháng
+    { n: 10, min: 720, max: Infinity, a: -60,  b: -40 }  // từ 24 tháng trở lên
+  ];
+  const TABS = {
+    meat:  { name: 'Thịt, cá, thủy hải sản, trứng', p1: 20, p2: 40, groups: GROUPS },
+    other: { name: 'Các ngành hàng còn lại',        p1: 25, p2: 49, groups: GROUPS }
+  };
+  const UNIT_DAYS = { d: 1, m: 30, y: 360 };
+  const HSD_CHIPS = [
+    { n: 3, u: 'd' }, { n: 5, u: 'd' }, { n: 7, u: 'd' }, { n: 10, u: 'd' },
+    { n: 14, u: 'd' }, { n: 15, u: 'd' }, { n: 30, u: 'd' },
+    { n: 2, u: 'm' }, { n: 3, u: 'm' }, { n: 6, u: 'm' }, { n: 12, u: 'm' }, { n: 24, u: 'm' }
+  ];
+  const UNIT_TEXT = { d: 'ngày', m: 'tháng', y: 'năm' };
+
+  const state = { tab: 'meat', mode: '1', unit: 'd' };
+  const $ = id => document.getElementById(id);
+  let lastResult = null;
+  let logTimer = null;
+  let lastLoggedKey = '';
+
+  /* ================= HÀM NGÀY THÁNG ================= */
+  const pad = n => String(n).padStart(2, '0');
+  function fmt(d) { return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear(); }
+  function addDays(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+  function todayMid() { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); }
+  function mkDate(d, m, y) {
+    const dt = new Date(y, m - 1, d);
+    return (dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d) ? dt : null;
+  }
+  /* Đọc ô ngày: chấp nhận 8 số (ddmmyyyy) hoặc 6 số (ddmmyy) */
+  function readDate(id) {
+    const dg = $(id).value.replace(/\D/g, '');
+    if (dg.length === 0) return { status: 'empty' };
+    if (dg.length !== 6 && dg.length !== 8) return { status: 'partial' };
+    let y = parseInt(dg.slice(4), 10);
+    if (dg.length === 6) y += 2000;
+    const dt = mkDate(parseInt(dg.slice(0, 2), 10), parseInt(dg.slice(2, 4), 10), y);
+    return dt ? { status: 'ok', date: dt } : { status: 'invalid' };
+  }
+  /* Tự thêm dấu / khi gõ số liền */
+  function autoFormat(el) {
+    const dg = el.value.replace(/\D/g, '').slice(0, 8);
+    let out = dg.slice(0, 2);
+    if (dg.length > 2) out += '/' + dg.slice(2, 4);
+    if (dg.length > 4) out += '/' + dg.slice(4);
+    el.value = out;
+    return dg.length;
+  }
+
+  /* ================= TÍNH TOÁN ================= */
+  function compute() {
+    const mode = state.mode;
+    const needNsx = mode === '1' || mode === '3';
+    const needNhh = mode === '2' || mode === '3';
+    const needHsd = mode !== '3';
+    let nsx, nhh, days, expiry;
+
+    let bad = null;
+    if (needNsx) { nsx = readDate('nsx'); if (nsx.status === 'invalid') bad = 'Ngày sản xuất không hợp lệ, kiểm tra lại ngày/tháng/năm.'; }
+    if (needNhh) { nhh = readDate('nhh'); if (nhh.status === 'invalid') bad = bad || 'Ngày hết hạn không hợp lệ, kiểm tra lại ngày/tháng/năm.'; }
+    if (bad) return { status: 'error', msg: bad };
+    if ((needNsx && nsx.status !== 'ok') || (needNhh && nhh.status !== 'ok')) return { status: 'idle' };
+
+    if (needHsd) {
+      const n = parseInt($('hsd').value, 10);
+      if (!n || n < 1) return { status: 'idle' };
+      days = n * UNIT_DAYS[state.unit];
+    }
+
+    if (mode === '1') {
+      expiry = addDays(nsx.date, days - 1);
+    } else if (mode === '2') {
+      expiry = nhh.date;
+    } else {
+      if (nhh.date < nsx.date) return { status: 'error', msg: 'Ngày hết hạn phải sau ngày sản xuất.' };
+      days = Math.round((nhh.date - nsx.date) / 86400000) + 1;
+      expiry = nhh.date;
+    }
+
+    if (expiry < todayMid()) {
+      return { status: 'expired', days, expiry, text: '⚠️hết date rồi ní ơi.⚠️' };
+    }
+
+    const tab = TABS[state.tab];
+    const g = tab.groups.find(x => days >= x.min && days <= x.max);
+    const d1 = g.a === null ? null : addDays(expiry, g.a);
+    const d2 = addDays(expiry, g.b);
+    const text =
+      '📅 Ngày hết hạn: ' + fmt(expiry) + '\n' +
+      '🔹 Giảm giá ' + tab.p1 + '%:' + (d1 ? ' ' + fmt(d1) : '') + '\n' +
+      '🔸 Giảm giá ' + tab.p2 + '%: ' + fmt(d2) + '\n' +
+      'Số lượng:';
+    return { status: 'ok', days, group: g.n, expiry, d1, d2, text };
+  }
+
+  /* ================= HIỂN THỊ ================= */
+  function render() {
+    const r = compute();
+    lastResult = r;
+    const info = $('info'), out = $('result'), copyBtn = $('copyBtn');
+    const tab = TABS[state.tab];
+    info.classList.remove('is-error');
+    out.classList.remove('is-empty');
+    copyBtn.disabled = true;
+
+    if (r.status === 'idle') {
+      info.textContent = '';
+      out.classList.add('is-empty');
+      out.textContent = 'Nhập đủ ngày và hạn sử dụng, kết quả sẽ hiện ngay tại đây.';
+    } else if (r.status === 'error') {
+      info.classList.add('is-error');
+      info.textContent = r.msg;
+      out.classList.add('is-empty');
+      out.textContent = '';
+    } else if (r.status === 'expired') {
+      info.textContent = 'Ngày hết hạn ' + fmt(r.expiry) + ' đã qua.';
+      out.textContent = r.text;
+      copyBtn.disabled = false;
+    } else {
+      let line = 'Nhóm ' + r.group + ', HSD ' + r.days + ' ngày';
+      if (r.group <= 2) line += '. Khung giờ giảm giá ' + tab.p2 + '% là 18h00.';
+      info.textContent = line;
+      out.textContent = r.text;
+      copyBtn.disabled = false;
+    }
+    scheduleLog(r);
+  }
+
+  function applyMode() {
+    const m = state.mode;
+    $('fNsx').hidden = !(m === '1' || m === '3');
+    $('fNhh').hidden = !(m === '2' || m === '3');
+    $('fHsd').hidden = (m === '3');
+    document.querySelectorAll('#modeSeg button').forEach(b => b.classList.toggle('is-on', b.dataset.mode === m));
+  }
+  function applyUnit() {
+    document.querySelectorAll('#unitSeg button').forEach(b => b.classList.toggle('is-on', b.dataset.unit === state.unit));
+    updateChips();
+  }
+  function updateChips() {
+    const v = $('hsd').value;
+    document.querySelectorAll('#hsdChips .chip').forEach(c => {
+      c.classList.toggle('is-on', c.dataset.n === v && c.dataset.u === state.unit);
+    });
+  }
+  function buildChips() {
+    const box = $('hsdChips');
+    HSD_CHIPS.forEach(c => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.dataset.n = String(c.n);
+      b.dataset.u = c.u;
+      b.textContent = c.n + ' ' + UNIT_TEXT[c.u];
+      box.appendChild(b);
+    });
+  }
+
+  /* ================= SỰ KIỆN ================= */
+  function setDateField(id, dt) {
+    $(id).value = fmt(dt);
+    afterDateInput(id, 8);
+  }
+  function afterDateInput(id, digitCount) {
+    render();
+    if (digitCount === 8) {
+      if (id === 'nsx' && state.mode === '1' && !$('hsd').value) $('hsd').focus();
+      if (id === 'nsx' && state.mode === '3' && !$('nhh').value) $('nhh').focus();
+      if (id === 'nhh' && state.mode === '2' && !$('hsd').value) $('hsd').focus();
+    }
+  }
+
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.tab = btn.dataset.tab;
+      document.querySelectorAll('.tab').forEach(t => {
+        const on = t === btn;
+        t.classList.toggle('is-active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      const isRut = state.tab === 'rut';
+      $('calcView').hidden = isRut;
+      $('rutView').hidden = !isRut;
+      if (isRut) renderRut(); else render();
+    });
+  });
+
+  document.querySelectorAll('#modeSeg button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.mode = btn.dataset.mode;
+      applyMode();
+      render();
+      const first = [$('fNsx'), $('fNhh'), $('fHsd')].find(f => !f.hidden);
+      const inp = first && first.querySelector('.txt');
+      if (inp && !inp.value) inp.focus();
+    });
+  });
+
+  document.querySelectorAll('#unitSeg button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.unit = btn.dataset.unit;
+      applyUnit();
+      render();
+    });
+  });
+
+  ['nsx', 'nhh'].forEach(id => {
+    $(id).addEventListener('input', function () {
+      const n = autoFormat(this);
+      afterDateInput(id, n);
+    });
+  });
+
+  $('hsd').addEventListener('input', function () {
+    this.value = this.value.replace(/\D/g, '');
+    updateChips();
+    render();
+  });
+
+  $('hsdChips').addEventListener('click', e => {
+    const c = e.target.closest('.chip');
+    if (!c) return;
+    $('hsd').value = c.dataset.n;
+    state.unit = c.dataset.u;
+    applyUnit();
+    render();
+  });
+
+  document.querySelectorAll('[data-quick]').forEach(b => {
+    b.addEventListener('click', () => {
+      setDateField(b.dataset.for, addDays(todayMid(), parseInt(b.dataset.quick, 10)));
+    });
+  });
+
+  document.querySelectorAll('.cal-pick').forEach(p => {
+    p.addEventListener('click', () => { try { p.showPicker(); } catch (e) {} });
+    p.addEventListener('change', () => {
+      if (!p.value) return;
+      const [y, m, d] = p.value.split('-').map(Number);
+      const dt = mkDate(d, m, y);
+      if (dt) setDateField(p.dataset.for, dt);
+      p.value = '';
+    });
+  });
+
+  /* ================= COPY ================= */
+  $('copyBtn').addEventListener('click', async () => {
+    if (!lastResult || !lastResult.text) return;
+    const text = lastResult.text;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      const t = document.createElement('textarea');
+      t.value = text;
+      document.body.appendChild(t);
+      t.select();
+      try { document.execCommand('copy'); } catch (err) {}
+      document.body.removeChild(t);
+    }
+    const btn = $('copyBtn');
+    btn.textContent = '✅ Đã copy';
+    setTimeout(() => { btn.textContent = 'Copy kết quả'; }, 1500);
+  });
+
+  /* ================= LỊCH SỬ (localStorage) ================= */
+  function saveLog(entry) {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const logs = raw ? JSON.parse(raw) : [];
+      logs.unshift(entry);
+      if (logs.length > MAX_LOG) logs.splice(MAX_LOG);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+    } catch (e) {}
+  }
+  function getLogs() {
+    try { const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : []; }
+    catch (e) { return []; }
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function fmtDateTime(iso) {
+    const d = new Date(iso);
+    return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+  function renderHistory() {
+    const logs = getLogs();
+    const list = $('historyList'), empty = $('historyEmpty');
+    $('historyCount').textContent = logs.length ? logs.length + ' lần' : '';
+    if (!logs.length) { list.innerHTML = ''; empty.hidden = false; return; }
+    empty.hidden = true;
+    const modeLabel = { mode1: 'SX + HSD', mode2: 'HH + HSD', mode3: 'SX + HH' };
+    const tabLabel = { meat: 'Thịt/hải sản/trứng', other: 'Ngành còn lại' };
+    list.innerHTML = logs.map(log => {
+      if (log.mode === 'visit') {
+        return '<div class="history-row"><span class="history-time">' + fmtDateTime(log.time) + '</span><span style="color:#86624A">Mở trang</span></div>';
+      }
+      const head = fmtDateTime(log.time) + ' | ' + (tabLabel[log.tab] || 'Ngành hàng cũ') + ' | ' + (modeLabel[log.mode] || log.mode);
+      let detail;
+      if (log.result === 'ok') {
+        detail = (log.group ? 'Nhóm ' + log.group + ' | ' : '') + 'HSD: ' + log.hsd + ' ngày | HH: ' + log.nhhStr +
+          ' | ' + (log.p1 || 25) + '%: ' + (log.d1Str || '—') + ' | ' + (log.p2 || 49) + '%: ' + log.d2Str;
+      } else if (log.result === 'het_date') {
+        detail = 'HSD: ' + log.hsd + ' ngày → <span style="color:#B3261E">Hết date</span>';
+      } else {
+        detail = 'HSD: ' + log.hsd + ' ngày → <span style="color:#E8690F">Nhóm sai</span>';
+      }
+      return '<div class="history-row"><span class="history-time">' + esc(head) + '</span><span>' + detail.replace(/(<[^>]*>)|([^<]+)/g, (m, tag, txt) => tag ? tag : esc(txt)) + '</span></div>';
+    }).join('');
+  }
+  $('historyBtn').addEventListener('click', () => {
+    const panel = $('historyPanel');
+    if (panel.style.display === 'block') { panel.style.display = 'none'; return; }
+    renderHistory();
+    panel.style.display = 'block';
+  });
+  $('clearBtn').addEventListener('click', () => {
+    if (!confirm('Xóa toàn bộ lịch sử?')) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    renderHistory();
+  });
+
+  /* ================= GHI LỊCH SỬ (chỉ lưu trên thiết bị) ================= */
+  /* Ghi khi kết quả đứng yên 2 giây, tránh ghi từng phím gõ */
+  function scheduleLog(r) {
+    clearTimeout(logTimer);
+    if (r.status !== 'ok' && r.status !== 'expired') return;
+    const key = state.tab + '|' + state.mode + '|' + r.text;
+    if (key === lastLoggedKey) return;
+    const tk = state.tab, mk = state.mode;
+    logTimer = setTimeout(() => { lastLoggedKey = key; doLog(r, tk, mk); }, 2000);
+  }
+  function doLog(r, tabKey, modeNo) {
+    const tab = TABS[tabKey];
+    const modeKey = 'mode' + modeNo;
+    if (r.status === 'expired') {
+      saveLog({ time: new Date().toISOString(), tab: tabKey, mode: modeKey, result: 'het_date', hsd: r.days });
+      return;
+    }
+    saveLog({
+      time: new Date().toISOString(), tab: tabKey, mode: modeKey, result: 'ok',
+      group: r.group, hsd: r.days, p1: tab.p1, p2: tab.p2,
+      nhhStr: fmt(r.expiry), d1Str: r.d1 ? fmt(r.d1) : '', d2Str: fmt(r.d2)
+    });
+  }
+
+  /* ================= TAB NGÀY CẦN RÚT =================
+     Ngày mai = ngày bắt đầu có mức giảm giá đầu tiên.
+     Mức giảm đầu tiên = cột 20%/25% (riêng nhóm 1 chưa có thì lấy cột 40%/49%).
+     Ngày hết hạn D = ngày mai trừ đi số ngày lệch; ngày sản xuất cần rút = D - (HSD - 1). */
+  const RUT_DEFAULT_DAYS = [3, 4, 5, 6, 7, 9, 10, 14, 15, 30, 60];
+  const rutRows = [];
+
+  function rutHtml(days) {
+    const g = GROUPS.find(x => days >= x.min && days <= x.max);
+    const off = g.a !== null ? g.a : g.b;
+    const tomorrow = addDays(todayMid(), 1);
+    const expiry = addDays(tomorrow, -off);
+    const made = addDays(expiry, -(days - 1));
+    if (made > todayMid()) {
+      return '<span class="rut-main is-muted">Chưa có hàng để rút</span>';
+    }
+    return '<span class="rut-main">' + fmt(made) + '</span>' +
+           '<span class="rut-exp">Hết hạn: ' + fmt(expiry) + '</span>';
+  }
+
+  function addRutRow() {
+    const list = $('rutList');
+    const wrap = document.createElement('div');
+    wrap.className = 'rut-input';
+    const inp = document.createElement('input');
+    inp.className = 'txt';
+    inp.type = 'text';
+    inp.inputMode = 'numeric';
+    inp.maxLength = 4;
+    inp.placeholder = 'Số ngày';
+    inp.setAttribute('aria-label', 'Số ngày hạn sử dụng');
+    const clr = document.createElement('button');
+    clr.type = 'button';
+    clr.className = 'rut-clear';
+    clr.textContent = '✕';
+    clr.hidden = true;
+    clr.setAttribute('aria-label', 'Xóa dòng này');
+    const res = document.createElement('div');
+    res.className = 'rut-res';
+    const row = { wrap: wrap, update: null };
+    row.update = () => {
+      clr.hidden = !inp.value;
+      const n = parseInt(inp.value, 10);
+      if (!n || n < 1) { res.innerHTML = ''; return; }
+      res.innerHTML = rutHtml(n);
+      if (list.lastChild === wrap) addRutRow();
+    };
+    inp.addEventListener('input', () => { inp.value = inp.value.replace(/\D/g, ''); row.update(); });
+    clr.addEventListener('click', () => {
+      if (list.lastChild === wrap) {
+        inp.value = '';
+        row.update();
+        inp.focus();
+      } else {
+        const k = rutRows.indexOf(row);
+        if (k > -1) rutRows.splice(k, 1);
+        list.removeChild(wrap);
+      }
+    });
+    wrap.append(inp, clr, res);
+    list.appendChild(wrap);
+    rutRows.push(row);
+  }
+
+  function renderRut() {
+    const t = todayMid();
+    $('rutToday').textContent = fmt(t);
+    $('rutTomorrow').textContent = fmt(addDays(t, 1));
+    $('rutDefault').innerHTML = RUT_DEFAULT_DAYS.map(d =>
+      '<div class="rut-row"><span class="rut-label">' + d + ' ngày</span><div class="rut-val">' + rutHtml(d) + '</div></div>'
+    ).join('');
+    rutRows.slice().forEach(r => r.update());
+  }
+  addRutRow();
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && state.tab === 'rut') renderRut();
+  });
+
+  /* ================= KHỞI ĐỘNG ================= */
+  buildChips();
+  applyMode();
+  applyUnit();
+  render();
+  // Ghi lượt truy cập trang
+  saveLog({ time: new Date().toISOString(), mode: 'visit', result: 'page_open', hsd: null });
+};
+</script>
+<script>
+/* Cổng kiểm tra thiết bị. Mỗi lần mở trang, hỏi Cloudflare Worker (rồi tới Google Sheet) xem thiết bị đã được duyệt chưa. */
+(function () {
+  // Dán link Cloudflare Worker vào đây (dạng https://ten-worker.ten-tai-khoan.workers.dev)
+  const WORKER_URL = 'https://vh3-device.thevinh1209.workers.dev';
+
+  const ID_KEY = 'vh3_device_id';
+  const OK_KEY = 'vh3_device_ok';
+  const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const $ = id => document.getElementById(id);
+  let memId = '';
+  let started = false;
+
+  function store(op, key, val) {
+    try {
+      if (op === 'get') return localStorage.getItem(key);
+      if (op === 'set') localStorage.setItem(key, val);
+      if (op === 'del') localStorage.removeItem(key);
+    } catch (e) {}
+    return null;
+  }
+  function makeId() {
+    const a = new Uint8Array(12);
+    const c = window.crypto;
+    if (c && c.getRandomValues) c.getRandomValues(a);
+    else for (let i = 0; i < 12; i++) a[i] = Math.floor(Math.random() * 256);
+    return Array.from(a, n => CHARS[n % CHARS.length]).join('');
+  }
+  function getId() {
+    let id = store('get', ID_KEY);
+    if (!/^[A-Z0-9]{12}$/.test(id || '')) {
+      id = memId || makeId();
+      memId = id;
+      store('set', ID_KEY, id);
+    }
+    return id;
+  }
+  function deviceInfo() {
+    const ua = navigator.userAgent;
+    let dev = 'Máy tính', os = 'Khác';
+    if (/iPhone/.test(ua)) { dev = 'iPhone'; os = 'iOS ' + ((ua.match(/OS (\d+)/) || [])[1] || ''); }
+    else if (/iPad/.test(ua)) { dev = 'iPad'; os = 'iPadOS'; }
+    else if (/Android/.test(ua)) {
+      dev = ((ua.match(/Android[^;]*; ([^;)]+)/) || [])[1] || 'Android').split(' Build')[0];
+      os = 'Android ' + ((ua.match(/Android (\d+)/) || [])[1] || '');
+    }
+    else if (/Windows/.test(ua)) os = 'Windows';
+    else if (/Mac OS X/.test(ua)) os = 'macOS';
+    else if (/Linux/.test(ua)) os = 'Linux';
+    let br = 'Khác';
+    if (/Zalo/i.test(ua)) br = 'Zalo';
+    else if (/FBAN|FBAV/.test(ua)) br = 'Facebook';
+    else if (/Edg/.test(ua)) br = 'Edge';
+    else if (/SamsungBrowser/.test(ua)) br = 'Samsung';
+    else if (/OPR\//.test(ua)) br = 'Opera';
+    else if (/Firefox|FxiOS/.test(ua)) br = 'Firefox';
+    else if (/Chrome|CriOS/.test(ua)) br = 'Chrome';
+    else if (/Safari/.test(ua)) br = 'Safari';
+    return dev + ', ' + os + ', ' + br + ', ' + screen.width + 'x' + screen.height;
+  }
+
+  /* Hỏi Worker. Trả về { ok, approved, status } hoặc ném lỗi. */
+  async function ask(id, extra) {
+    const u = new URL(WORKER_URL);
+    u.searchParams.set('id', id);
+    u.searchParams.set('device', deviceInfo());
+    Object.keys(extra || {}).forEach(k => u.searchParams.set(k, extra[k]));
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12000);
+    try {
+      const r = await fetch(u.toString(), { signal: ctrl.signal });
+      const j = await r.json();
+      if (!j || j.ok !== true) throw new Error((j && j.error) || 'bad_response');
+      return j;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  function showLoading() {
+    $('gateTitle').textContent = 'Đang kiểm tra thiết bị...';
+    $('gateMsg').textContent = '';
+    $('gateCodeWrap').hidden = true;
+    $('gate').hidden = false;
+  }
+  function showLocked(kind, id) {
+    const text = {
+      pending: ['Thiết bị chưa được cấp quyền', 'Gửi mã bên dưới cho Vinh để được cấp quyền, sau đó bấm "Kiểm tra lại".'],
+      blocked: ['Thiết bị đã bị khóa', 'Quyền sử dụng của thiết bị này đã bị thu hồi. Liên hệ Vinh nếu cần dùng lại.'],
+      error: ['Không kết nối được', 'Không liên lạc được với máy chủ duyệt thiết bị. Kiểm tra mạng rồi bấm "Kiểm tra lại".'],
+      config: ['Chưa cài đặt máy chủ duyệt thiết bị', 'Quản trị viên cần dán link Cloudflare Worker vào biến WORKER_URL trong index.html.']
+    }[kind];
+    $('gateTitle').textContent = text[0];
+    $('gateMsg').textContent = text[1];
+    $('gateCode').textContent = id || '';
+    $('gateCodeWrap').hidden = (kind === 'config');
+    $('gate').hidden = false;
+  }
+  function openApp() {
+    $('gate').hidden = true;
+    $('app').hidden = false;
+    if (!started) {
+      started = true;
+      window.__vh3Start();
+    }
+  }
+
+  async function check(id, recheck) {
+    let j;
+    try {
+      j = await ask(id, recheck ? { recheck: '1' } : {});
+    } catch (e) {
+      // Mất mạng: thiết bị từng được duyệt vẫn cho vào
+      if (store('get', OK_KEY) === '1') { openApp(); return 'offline-ok'; }
+      showLocked('error', id);
+      return 'error';
+    }
+    if (j.approved) {
+      store('set', OK_KEY, '1');
+      openApp();
+      return 'approved';
+    }
+    store('del', OK_KEY);
+    const kind = j.status === 'Khóa' ? 'blocked' : 'pending';
+    showLocked(kind, id);
+    return kind;
+  }
+
+  async function copyCode(id) {
+    try {
+      await navigator.clipboard.writeText(id);
+    } catch (e) {
+      const t = document.createElement('textarea');
+      t.value = id;
+      document.body.appendChild(t);
+      t.select();
+      try { document.execCommand('copy'); } catch (err) {}
+      document.body.removeChild(t);
+    }
+    const b = $('gateCopy');
+    b.textContent = '✅ Đã copy';
+    setTimeout(() => { b.textContent = 'Copy mã'; }, 1500);
+  }
+
+  function init() {
+    if (!/^https:\/\/[^\s\/]+/.test(WORKER_URL)) {
+      showLocked('config', '');
+      return;
+    }
+    const id = getId();
+    $('gateCopy').addEventListener('click', () => copyCode(id));
+    $('gateRetry').addEventListener('click', async () => {
+      const b = $('gateRetry');
+      b.disabled = true;
+      b.textContent = 'Đang kiểm tra...';
+      $('gateNote').textContent = '';
+      const res = await check(id, true);
+      b.disabled = false;
+      b.textContent = 'Kiểm tra lại';
+      if (res === 'pending') $('gateNote').textContent = 'Thiết bị vẫn chưa được duyệt.';
+    });
+    showLoading();
+    check(id, false);
+  }
+  init();
+})();
+</script>
+</body>
+</html>
