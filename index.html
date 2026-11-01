@@ -333,7 +333,12 @@ button { cursor: pointer; }
   border: 2px dashed var(--orange-deep);
   border-radius: 10px;
 }
+.gate-req { margin-top: 16px; }
+.gate-send { width: 100%; margin-top: 10px; }
 .gate-note { min-height: 20px; margin-top: 12px !important; font-size: 13px !important; color: var(--danger); }
+.gate-note.is-ok { color: #1B6E2E; font-weight: 600; }
+.gate-or { margin-top: 18px !important; font-size: 12px !important; color: var(--muted); }
+.gate-code { margin: 8px 0 12px; padding: 10px 6px; font-size: 1.2rem; }
 .gate .btn-row { padding: 0; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -349,13 +354,17 @@ button { cursor: pointer; }
   <div class="gate-box">
     <h2 id="gateTitle">Đang kiểm tra thiết bị...</h2>
     <p id="gateMsg"></p>
+    <div id="gateReq" class="gate-req" hidden>
+      <button type="button" class="btn gate-send" id="gateSend">Gửi yêu cầu cấp quyền</button>
+    </div>
+    <p class="gate-note" id="gateNote" role="status"></p>
     <div id="gateCodeWrap" hidden>
+      <p class="gate-or">Mã thiết bị của bạn</p>
       <div class="gate-code" id="gateCode" aria-label="Mã thiết bị"></div>
       <div class="btn-row">
-        <button type="button" class="btn" id="gateCopy">Copy mã</button>
+        <button type="button" class="btn ghost" id="gateCopy">Copy mã</button>
         <button type="button" class="btn ghost" id="gateRetry">Kiểm tra lại</button>
       </div>
-      <p class="gate-note" id="gateNote" role="status"></p>
     </div>
   </div>
 </div>
@@ -926,7 +935,8 @@ window.__vh3Start = function () {
 };
 </script>
 <script>
-/* Cổng kiểm tra thiết bị. Mỗi lần mở trang, hỏi Cloudflare Worker (rồi tới Google Sheet) xem thiết bị đã được duyệt chưa. */
+/* Cổng kiểm tra thiết bị. Mỗi lần mở trang, hỏi Cloudflare Worker (rồi tới Google Sheet) xem thiết bị đã được duyệt chưa.
+   Thiết bị chưa duyệt: nhập tên và gửi yêu cầu, quản trị viên nhận thông báo Telegram và bấm Duyệt. */
 (function () {
   // Dán link Cloudflare Worker vào đây (dạng https://ten-worker.ten-tai-khoan.workers.dev)
   const WORKER_URL = 'https://vh3-device.thevinh1209.workers.dev';
@@ -934,9 +944,12 @@ window.__vh3Start = function () {
   const ID_KEY = 'vh3_device_id';
   const OK_KEY = 'vh3_device_ok';
   const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const POLL_MS = 8000;               // sau khi gửi yêu cầu, cứ 8 giây hỏi lại một lần
+  const POLL_MAX_MS = 10 * 60 * 1000; // và dừng sau 10 phút
   const $ = id => document.getElementById(id);
   let memId = '';
   let started = false;
+  let pollTimer = null;
 
   function store(op, key, val) {
     try {
@@ -986,7 +999,7 @@ window.__vh3Start = function () {
     return dev + ', ' + os + ', ' + br + ', ' + screen.width + 'x' + screen.height;
   }
 
-  /* Hỏi Worker. Trả về { ok, approved, status } hoặc ném lỗi. */
+  /* Hỏi Worker. Trả về { ok, approved, status, ... } hoặc ném lỗi. */
   async function ask(id, extra) {
     const u = new URL(WORKER_URL);
     u.searchParams.set('id', id);
@@ -1004,32 +1017,58 @@ window.__vh3Start = function () {
     }
   }
 
+  function setNote(text, good) {
+    const n = $('gateNote');
+    n.textContent = text || '';
+    n.classList.toggle('is-ok', !!good);
+  }
   function showLoading() {
-    $('gateTitle').textContent = 'Đang kiểm tra thiết bị...';
+    $('gateTitle').textContent = 'Bình tĩnh, Thịt chó còn có mắm tôm...';
     $('gateMsg').textContent = '';
+    $('gateReq').hidden = true;
     $('gateCodeWrap').hidden = true;
+    setNote('');
     $('gate').hidden = false;
   }
   function showLocked(kind, id) {
     const text = {
-      pending: ['Thiết bị chưa được cấp quyền', 'Gửi mã bên dưới cho Vinh để được cấp quyền, sau đó bấm "Kiểm tra lại".'],
-      blocked: ['Thiết bị đã bị khóa', 'Quyền sử dụng của thiết bị này đã bị thu hồi. Liên hệ Vinh nếu cần dùng lại.'],
+      pending: ['Thiết bị chưa được cấp quyền', 'Bấm "Gửi yêu cầu cấp quyền" để báo cho Vinh nhóe. Trang tự mở khi duyệt xong.'],
+      blocked: ['Thiết bị đã bị khóa', 'Quyền sử dụng của thiết bị này đã bị thu hồi. Nếu đây là 1 sự nhầm lẫn liên hệ Vinh nhóe'],
       error: ['Không kết nối được', 'Không liên lạc được với máy chủ duyệt thiết bị. Kiểm tra mạng rồi bấm "Kiểm tra lại".'],
-      config: ['Chưa cài đặt máy chủ duyệt thiết bị', 'Quản trị viên cần dán link Cloudflare Worker vào biến WORKER_URL trong index.html.']
+      config: ['Chưa cài đặt máy chủ duyệt thiết bị']
     }[kind];
     $('gateTitle').textContent = text[0];
     $('gateMsg').textContent = text[1];
     $('gateCode').textContent = id || '';
+    $('gateReq').hidden = (kind !== 'pending');
     $('gateCodeWrap').hidden = (kind === 'config');
     $('gate').hidden = false;
   }
+  function stopPoll() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  }
   function openApp() {
+    stopPoll();
     $('gate').hidden = true;
     $('app').hidden = false;
     if (!started) {
       started = true;
       window.__vh3Start();
     }
+  }
+
+  /* Sau khi gửi yêu cầu: tự hỏi lại, được duyệt thì mở trang luôn */
+  function startPoll(id) {
+    stopPoll();
+    const t0 = Date.now();
+    pollTimer = setInterval(async () => {
+      if (Date.now() - t0 > POLL_MAX_MS) { stopPoll(); return; }
+      try {
+        const j = await ask(id, { recheck: '1' });
+        if (j.approved) { store('set', OK_KEY, '1'); openApp(); }
+        else if (j.status === 'Khóa') { stopPoll(); showLocked('blocked', id); }
+      } catch (e) {}
+    }, POLL_MS);
   }
 
   async function check(id, recheck) {
@@ -1051,6 +1090,28 @@ window.__vh3Start = function () {
     const kind = j.status === 'Khóa' ? 'blocked' : 'pending';
     showLocked(kind, id);
     return kind;
+  }
+
+  async function sendRequest(id) {
+    const b = $('gateSend');
+    b.disabled = true;
+    b.textContent = 'Đang gửi...';
+    setNote('');
+    try {
+      const j = await ask(id, { action: 'request' });
+      if (j.approved) { store('set', OK_KEY, '1'); openApp(); return; }
+      if (j.status === 'Khóa') { showLocked('blocked', id); return; }
+      setNote('✅ Đã gửi yêu cầu. Trang sẽ tự mở khi bạn được duyệt.', true);
+      b.textContent = 'Đã gửi yêu cầu';
+      setTimeout(() => { b.disabled = false; b.textContent = 'Gửi lại yêu cầu'; }, 60000);
+      startPoll(id);
+    } catch (e) {
+      setNote(e.message === 'too_many'
+        ? 'Hệ thống đang nhận quá nhiều yêu cầu, thử lại sau ít phút.'
+        : 'Không gửi được, kiểm tra mạng rồi thử lại.', false);
+      b.disabled = false;
+      b.textContent = 'Gửi yêu cầu cấp quyền';
+    }
   }
 
   async function copyCode(id) {
@@ -1075,16 +1136,18 @@ window.__vh3Start = function () {
       return;
     }
     const id = getId();
+    $('gateSend').addEventListener('click', () => sendRequest(id));
     $('gateCopy').addEventListener('click', () => copyCode(id));
     $('gateRetry').addEventListener('click', async () => {
       const b = $('gateRetry');
       b.disabled = true;
       b.textContent = 'Đang kiểm tra...';
-      $('gateNote').textContent = '';
+      const sentNote = $('gateNote').classList.contains('is-ok') ? $('gateNote').textContent : '';
+      setNote('');
       const res = await check(id, true);
       b.disabled = false;
       b.textContent = 'Kiểm tra lại';
-      if (res === 'pending') $('gateNote').textContent = 'Thiết bị vẫn chưa được duyệt.';
+      if (res === 'pending') setNote(sentNote ? 'Chưa được duyệt, vui lòng chờ thêm.' : 'Thiết bị vẫn chưa được duyệt.', !!sentNote);
     });
     showLoading();
     check(id, false);
